@@ -1,33 +1,5 @@
-# using Flux
-
-# f(x) = 4.3x-1.2
-# x_train, x_test = hcat(-100.0: 0.5: 100.0...), hcat(100:150...)
-# y_train, y_test = f.(x_train), f.(x_test)
-
-# model = Chain(
-#     Dense(1=>8, relu),
-#     Dense(8=>8, relu),
-#     Dense(8=>1)
-# )
-
-# loss(x, y) = Flux.Losses.mse(model(x), y)
-# ps = Flux.params(model)
-# data = [(x_train, y_train)]
-# opt = Flux.Optimise.Descent()
-
-
-# function fit(epochs::Integer)
-#     for epoch in 1:epochs
-#         println("Epoch $epoch...")
-#         Flux.train!(loss, ps, data, opt)
-#     end
-# end
-
-
-
-
-
-
+# Simple linear regression in Julia & Flux.jl
+# Простая линейная регрессия на Julia & Flux.jl
 using Flux
 using Flux: train!
 
