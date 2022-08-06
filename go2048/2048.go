@@ -70,7 +70,6 @@ func (f *Field) Compact(row []int) []int {
 		return row
 	}
 
-	// 4, 0, 0, 4
 	row = ClearZero(row)
 	res := []int{}
 	for i := 0; i < len(row); {
@@ -232,10 +231,7 @@ func Colorize(cell int) string {
 	return fmt.Sprintf("%s%3d%s", color, cell, BACK)
 }
 func (f *Field) Show() {
-
-	// fmt.Print("\033[2J\033[H")
 	fmt.Print("\033c\033[H")
-
 	for _, row := range f.Grid {
 		for _, i := range row {
 			fmt.Print(Colorize(i))
@@ -315,103 +311,14 @@ func ListenKey() <-chan uint8 {
 	return c
 }
 
-func _Compact(row []int) []int {
-	if len(row) <= 1 {
-		return row
-	}
-
-	res := []int{}
-	var i, j int
-	for i < len(row)-1 && j < len(row) {
-		for row[i] == 0 {
-			i++
-		}
-		// V{4, 4, 8, 16, 0, 0}, V{8, 8, 16, 0, 0, 0}
-		j = i + 1
-		for row[j] == 0 {
-			j++
-		}
-		if row[i] == row[j] {
-			res = append(res, row[i]+row[j])
-
-			fmt.Printf("%si: %d; j: %d%s\n", "\033[01;38;05;97m", i, j, "\033[0m")
-			i = j + 1
-			continue
-		}
-
-		// If not condition than just add element
-		res = append(res, row[i])
-		i++
-	}
-
-	for len(res) < len(row) {
-		res = append(res, 0)
-	}
-	return res
-}
 func main() {
-	// F, err := NewField(4, 4)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// game := Game2048{
-	// 	Field: &F,
-	// 	debug: false,
-	// }
-	// game.Run()
-	type V []int
-	test_data := []Test{
-		{V{4, 0, 0, 4}, V{8, 0, 0, 0}},
-		{V{4, 2, 2, 4}, V{4, 4, 4, 0}},
-		{V{2, 2, 2, 2, 2, 2, 2, 2, 2, 2}, V{4, 4, 4, 4, 4, 0, 0, 0, 0, 0}},
-		{V{4, 4, 8, 16, 0, 0}, V{8, 8, 16, 0, 0, 0}},
-		{V{0, 0, 3, 3}, V{6, 0, 0, 0}},
+	F, err := NewField(4, 4)
+	if err != nil {
+		panic(err)
 	}
-	test(test_data)
-
-}
-
-type Test struct {
-	in  []int
-	out []int
-}
-
-func Equal[E comparable](s1, s2 []E) bool {
-	if len(s1) != len(s2) {
-		return false
+	game := Game2048{
+		Field: &F,
+		debug: false,
 	}
-	for i := range s1 {
-		if s1[i] != s2[i] {
-			return false
-		}
-	}
-	return true
+	game.Run()
 }
-
-func test(test_data []Test) {
-	const (
-		BACK  = "\033[0m"
-		GREEN = "\033[38;05;120m"
-		RED   = "\033[38;05;203m"
-	)
-
-	for _, v := range test_data {
-		quest := v.in
-		answ := v.out
-		guess := _Compact(v.in)
-		if Equal[int](guess, answ) {
-			fmt.Printf("%s%v: %v%s\n", GREEN, quest, guess, BACK)
-		} else {
-			fmt.Printf("%s%v: %v%s\n", RED, quest, guess, BACK)
-		}
-	}
-}
-
-// [][]int{
-// 	{2, 2, 2, 2},
-// 	{0, 2, 0, 2},
-// 	{4, 4, 8, 16},
-// 	{32, 0, 16, 2},
-// 	{4, 4, 4, 4},
-// 	{4, 9, 5, 6},
-// }
