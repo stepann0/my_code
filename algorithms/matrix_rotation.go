@@ -30,7 +30,7 @@ type Matrix[T Number] struct {
 
 func NewEmpty[T Number](rows, cols int) *Matrix[T] {
 	var el T
-	m := [][]T{}
+	m := make([][]T, rows)
 	for i := 0; i < rows; i++ {
 		m = append(m, []T{})
 		for j := 0; j < cols; j++ {
