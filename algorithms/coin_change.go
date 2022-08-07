@@ -35,7 +35,7 @@ func Solve(coins []int, amount int) int {
 	row := NewRow(amount)
 	for _, coin := range coins {
 		// Find minimum num of coins
-		// to make change using $coin
+		// to make change using coin
 		// for each amount from 1 to amount+1
 		for i := 1; i < len(row); i++ {
 			if coin == i {
@@ -55,8 +55,7 @@ func Solve(coins []int, amount int) int {
 }
 
 func main() {
-	set := []int{3, 8}
-	sum := 13
-
+	set := []int{3, 4, 5}
+	sum := 17
 	fmt.Println(Solve(set, sum))
 }
