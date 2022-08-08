@@ -51,6 +51,9 @@ func BruteForce(num int) int {
 	max := num
 	for i := 0; i < len(s)-1; i++ {
 		for j := i + 1; j < len(s); j++ {
+			if s[j] <= s[i] {
+				continue
+			}
 			// trying to swap
 			s[i], s[j] = s[j], s[i]
 			if n, _ := strconv.Atoi(string(s)); n > max {
