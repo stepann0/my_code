@@ -34,7 +34,6 @@ func NewField(rows, cols int) Field {
 }
 
 func (f *Field) AddRandom() {
-	rand.Seed(time.Now().Unix())
 	empty_cells := [][2]int{} // like slice of tuples
 	for i := range f.Grid {
 		for j := range f.Grid[i] {
@@ -44,10 +43,14 @@ func (f *Field) AddRandom() {
 		}
 	}
 
-	c := empty_cells[rand.Intn(len(empty_cells))]
-	vals := []int{2, 4} // you can add 2 or 4
-	v := vals[rand.Intn(len(vals))]
-	f.Grid[c[0]][c[1]] = v
+	cell := empty_cells[rand.Intn(len(empty_cells))] // choose random cell
+
+	// 90% probability for 2, and 10% for 4
+	if v := rand.Float64(); v < 0.9 {
+		f.Grid[cell[0]][cell[1]] = 2
+	} else {
+		f.Grid[cell[0]][cell[1]] = 4
+	}
 }
 
 func ClearZero(s []int) []int {
@@ -61,12 +64,13 @@ func ClearZero(s []int) []int {
 	return res
 }
 
-func (f *Field) Compact(row []int) []int {
+func (f *Field) Compact(row []int) ([]int, int) {
 	if len(row) <= 1 {
-		return row
+		return row, 0
 	}
 
 	row = ClearZero(row)
+	score := 0
 	res := make([]int, len(row))
 	for i, j := 0, 0; i < len(row); {
 		if row[i] == 0 {
@@ -75,9 +79,11 @@ func (f *Field) Compact(row []int) []int {
 		}
 
 		if i < len(row)-1 && row[i] == row[i+1] {
-			res[j] = row[i] + row[i+1]
+			sum := row[i] * 2
+			res[j] = sum
+			score += sum
 			j++
-			i += 2 // Escape unnesesary next element
+			i += 2 // Skip unnesesary next element
 			continue
 		}
 		// If not condition than just add element
@@ -85,17 +91,21 @@ func (f *Field) Compact(row []int) []int {
 		j++
 		i++
 	}
-	return res
+	return res, score
 }
 
 // ------------------
 //        LEFT
 // ------------------
 
-func (f *Field) Left() {
+func (f *Field) Left() int {
+	score := 0
 	for i := 0; i < f.rows; i++ {
-		f.Grid[i] = f.Compact(f.Grid[i])
+		var s int
+		f.Grid[i], s = f.Compact(f.Grid[i])
+		score += s
 	}
+	return score
 }
 
 // ------------------
@@ -109,65 +119,77 @@ func reverse(s []int) []int {
 	return s
 }
 
-func (f *Field) LazyCompactRight(row []int) []int {
-	return reverse(f.Compact(reverse(row)))
+func (f *Field) LazyCompactRight(row []int) ([]int, int) {
+	row, score := f.Compact(reverse(row))
+	return reverse(row), score
 }
 
-func (f *Field) Right() {
+func (f *Field) Right() int {
+	score := 0
 	for i := 0; i < f.rows; i++ {
-		f.Grid[i] = f.LazyCompactRight(f.Grid[i])
+		var s int
+		f.Grid[i], s = f.LazyCompactRight(f.Grid[i])
+		score += s
 	}
+	return score
 }
 
 // ------------------
 //         UP
 // ------------------
 
-func (f *Field) LazyCompactUp(col_num int) {
+func (f *Field) LazyCompactUp(col_num int) int {
 	// Copy of colomn
-	col_cp := []int{}
-	for i := 0; i < f.rows; i++ {
-		col_cp = append(col_cp, f.Grid[i][col_num])
+	col_cp := make([]int, f.rows)
+	for i := range col_cp {
+		col_cp[i] = f.Grid[i][col_num]
 	}
 
-	col_cp = f.Compact(col_cp)
+	col_cp, score := f.Compact(col_cp)
 
 	for i := 0; i < f.rows; i++ {
 		f.Grid[i][col_num] = col_cp[i]
 	}
+	return score
 }
 
-func (f *Field) Up() {
+func (f *Field) Up() int {
+	score := 0
 	for i := 0; i < f.cols; i++ {
-		f.LazyCompactUp(i)
+		score += f.LazyCompactUp(i)
 	}
+	return score
 }
 
 // ------------------
 //        DOWN
 // ------------------
 
-func (f *Field) LazyCompactDown(col_num int) {
-	// Copy of colomn
+func (f *Field) LazyCompactDown(col_num int) int {
+	// Reversed copy of colomn
 	col_cp := []int{}
 	for i := f.rows - 1; i >= 0; i-- {
 		col_cp = append(col_cp, f.Grid[i][col_num])
 	}
-	col_cp = reverse(f.Compact(col_cp))
+	col_cp, score := f.Compact(col_cp)
+	col_cp = reverse(col_cp)
 	for i := 0; i < f.rows; i++ {
 		f.Grid[i][col_num] = col_cp[i]
 	}
+	return score
 }
 
-func (f *Field) Down() {
+func (f *Field) Down() int {
+	score := 0
 	for i := 0; i < f.cols; i++ {
-		f.LazyCompactDown(i)
+		score += f.LazyCompactDown(i)
 	}
+	return score
 }
 
 // Print for debugging
 func (f *Field) Print() {
-	fmt.Print("\033c\033[H")
+	// fmt.Print("\033c\033[H")
 	for _, row := range f.Grid {
 		for _, i := range row {
 			fmt.Printf("%4d", i)
@@ -177,45 +199,14 @@ func (f *Field) Print() {
 	fmt.Print("\n")
 }
 
-func Colorize(cell int) string {
-	if cell == 0 {
-		return " · "
-	}
-	BACK := "\033[0m"
-	colors := map[int]string{
-		2:    "\033[01;38;05;16;48;05;158m",  // 2
-		4:    "\033[01;38;05;15;48;05;42m",   // 4
-		8:    "\033[01;38;05;15;48;05;33m",   // 8
-		16:   "\033[01;38;05;15;48;05;98m",   // 16
-		32:   "\033[01;38;05;91;48;05;182m",  // 32
-		64:   "\033[01;38;05;17;48;05;69m",   // 64
-		128:  "\033[01;38;05;52;48;05;203m",  // 128
-		256:  "\033[01;38;05;15;48;05;24m",   // 256
-		512:  "\033[01;38;05;233;48;05;208m", // 512
-		1024: "\033[01;38;05;232;48;05;220m", // 1024
-		2048: "\033[01;38;05;232;48;05;83m",  // 2048
-	}
-	return fmt.Sprintf("%s%3d%s", colors[cell], cell, BACK)
-}
-
-func (f *Field) Show() {
-	fmt.Print("\033c\033[H")
-	for _, row := range f.Grid {
-		for _, i := range row {
-			fmt.Print(Colorize(i))
-		}
-		fmt.Println()
-	}
-	fmt.Println()
-}
-
 // ------------------------------
 // ------------ Game ------------
 // ------------------------------
 
 type Game2048 struct {
-	Field *Field
-	debug bool
+	Field       *Field
+	Score       int
+	ColorScheme map[int]string
 }
 
 func (g *Game2048) Move(key uint8) {
@@ -228,24 +219,36 @@ func (g *Game2048) Move(key uint8) {
 
 	switch key {
 	case UP:
-		g.Field.Up()
+		g.Score += g.Field.Up()
 
 	case DOWN:
-		g.Field.Down()
+		g.Score += g.Field.Down()
 
 	case RIGHT:
-		g.Field.Right()
+		g.Score += g.Field.Right()
 
 	case LEFT:
-		g.Field.Left()
+		g.Score += g.Field.Left()
 	}
-	g.Field.AddRandom()
+	g.Show(g.Field)
 
-	if g.debug {
-		g.Field.Print()
-	} else {
-		g.Field.Show()
+	// Add delay before adding random cell
+	time.Sleep(time.Millisecond * 160)
+	g.Field.AddRandom()
+	g.Show(g.Field)
+}
+
+func (g *Game2048) Show(f *Field) {
+	// Print game field
+	fmt.Print("\033c\033[H") // clear terminal
+	for _, row := range f.Grid {
+		for _, r := range row {
+			fmt.Print(g.Colorize(r))
+		}
+		fmt.Println()
 	}
+	// Print score
+	fmt.Printf("\n%s%s%d%s\n\n", "\033[01;38;05;17;48;05;15m", "Score: ", g.Score, "\033[0m")
 }
 
 func (g *Game2048) Run() {
@@ -255,11 +258,7 @@ func (g *Game2048) Run() {
 	exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
 
 	key := ListenKey()
-	if g.debug {
-		g.Field.Print()
-	} else {
-		g.Field.Show()
-	}
+	g.Show(g.Field)
 	for {
 		g.Move(<-key)
 	}
@@ -280,11 +279,31 @@ func ListenKey() <-chan uint8 {
 	return c
 }
 
+func (g *Game2048) Colorize(cell int) string {
+	if cell == 0 {
+		return " · "
+	}
+	return fmt.Sprintf("%s%3d%s", g.ColorScheme[cell], cell, "\033[0m")
+}
+
 func main() {
-	F := NewField(4, 4)
+	rand.Seed(time.Now().UnixNano())
+	F := NewField(5, 5)
 	game := Game2048{
 		Field: &F,
-		debug: false,
+		ColorScheme: map[int]string{
+			2:    "\033[01;38;05;16;48;05;158m",  // 2
+			4:    "\033[01;38;05;15;48;05;42m",   // 4
+			8:    "\033[01;38;05;15;48;05;33m",   // 8
+			16:   "\033[01;38;05;15;48;05;98m",   // 16
+			32:   "\033[01;38;05;91;48;05;182m",  // 32
+			64:   "\033[01;38;05;15;48;05;102m",  // 64
+			128:  "\033[01;38;05;52;48;05;203m",  // 128
+			256:  "\033[01;38;05;15;48;05;24m",   // 256
+			512:  "\033[01;38;05;233;48;05;208m", // 512
+			1024: "\033[01;38;05;232;48;05;220m", // 1024
+			2048: "\033[01;38;05;232;48;05;83m",  // 2048
+		},
 	}
 	game.Run()
 }
