@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
 	"os"
 	"os/exec"
+	"time"
 )
 
 type Field struct {
@@ -34,6 +34,7 @@ func NewField(rows, cols int) Field {
 }
 
 func (f *Field) AddRandom() {
+	rand.Seed(time.Now().Unix())
 	empty_cells := [][2]int{} // like slice of tuples
 	for i := range f.Grid {
 		for j := range f.Grid[i] {
@@ -185,7 +186,7 @@ func Colorize(cell int) string {
 		2:    "\033[01;38;05;16;48;05;158m",  // 2
 		4:    "\033[01;38;05;15;48;05;42m",   // 4
 		8:    "\033[01;38;05;15;48;05;33m",   // 8
-		16:   "\033[01;38;05;15;48;05;91m",   // 16
+		16:   "\033[01;38;05;15;48;05;98m",   // 16
 		32:   "\033[01;38;05;91;48;05;182m",  // 32
 		64:   "\033[01;38;05;17;48;05;69m",   // 64
 		128:  "\033[01;38;05;52;48;05;203m",  // 128
