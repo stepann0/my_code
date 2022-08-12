@@ -116,6 +116,35 @@ func (f *Field) AddRandom() {
 	}
 }
 
+func (f1 *Field) Equal(f2 *Field) bool {
+	if f1.cols != f2.cols || f1.rows != f2.rows {
+		return false
+	}
+	for i := range f1.Grid {
+		for j := range f1.Grid[i] {
+			if f1.Grid[i][j] != f2.Grid[i][j] {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (f *Field) Copy() Field {
+	grid := make([]Row, f.rows)
+	for i := range grid {
+		grid[i] = make(Row, f.cols)
+		for j := range f.Grid[i] {
+			grid[i][j] = f.Grid[i][j]
+		}
+	}
+	return Field{
+		Grid: grid,
+		cols: f.cols,
+		rows: f.rows,
+	}
+}
+
 // ------------------
 //        LEFT
 // ------------------
@@ -228,7 +257,7 @@ func (g *Game2048) Move(key uint8) {
 		RIGHT uint8 = 67
 		LEFT  uint8 = 68
 	)
-
+	old_field := g.Field.Copy()
 	switch key {
 	case UP:
 		g.Score += g.Field.Up()
@@ -242,7 +271,11 @@ func (g *Game2048) Move(key uint8) {
 	case LEFT:
 		g.Score += g.Field.Left()
 	}
+
 	g.Show(g.Field)
+	if old_field.Equal(g.Field) {
+		return
+	}
 
 	// Add delay before adding random cell
 	time.Sleep(time.Millisecond * 180)
