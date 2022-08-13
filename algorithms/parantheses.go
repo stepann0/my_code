@@ -11,7 +11,6 @@ var pairs map[string]string = map[string]string{
 }
 
 func isClosePar(p string) bool {
-	//  == instead strings.Contains() is for speed
 	if p == ")" || p == "]" || p == "}" {
 		return true
 	}

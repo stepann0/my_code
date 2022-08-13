@@ -230,14 +230,16 @@ func (f *Field) Down() int {
 }
 
 // Print for debugging
-func (f *Field) Print() {
-	for _, row := range f.Grid {
-		for _, i := range row {
-			fmt.Printf("%4d", i)
+func (f Field) String() string {
+	s := ""
+	for i := range f.Grid {
+		for j := range f.Grid[i] {
+			s += fmt.Sprintf("%5d", f.Grid[i][j])
 		}
-		fmt.Println()
+		s += "\n"
 	}
-	fmt.Println()
+	s += fmt.Sprintf("%d×%d\n", f.rows, f.cols)
+	return s
 }
 
 // ------------------------------
@@ -323,7 +325,7 @@ func ListenKey() <-chan uint8 {
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
-	F := NewField(4, 4)
+	F := NewField(10, 10)
 	game := Game2048{
 		Field: &F,
 		ColorScheme: &map[int]string{

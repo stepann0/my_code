@@ -26,8 +26,8 @@ type Ordered interface {
 
 // Function returns index of searched element or -1
 func BinarySearch[T Ordered](arr []T, search T) int {
-	var left int = 0
-	var right int = len(arr) - 1
+	left := 0
+	right := len(arr) - 1
 
 	for left <= right {
 		mid := (left + right) / 2

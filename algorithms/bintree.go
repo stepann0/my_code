@@ -2,31 +2,52 @@ package main
 
 import "fmt"
 
-type node struct {
-	Val   int
-	Left  *node
-	Right *node
+type Signed interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64
 }
 
-func insert(n *node, val int) *node {
+type Unsigned interface {
+	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr
+}
+
+type Integer interface {
+	Signed | Unsigned
+}
+
+type Float interface {
+	~float32 | ~float64
+}
+
+type Ordered interface {
+	Integer | Float | ~string
+}
+
+type Node[T Ordered] struct {
+	Val   T
+	Left  *Node[T]
+	Right *Node[T]
+}
+
+func Insert[T Ordered](n *Node[T], val T) *Node[T] {
 	if n == nil {
-		n = &node{Val: val, Left: nil, Right: nil}
-	} else if val < n.Val {
-		n.Left = insert(n.Left, val)
+		return &Node[T]{Val: val, Left: nil, Right: nil}
+	}
+	if val < n.Val {
+		n.Left = Insert(n.Left, val)
 	} else if val > n.Val {
-		n.Right = insert(n.Right, val)
+		n.Right = Insert(n.Right, val)
 	}
 	return n
 }
 
-func search(n *node, val int) bool {
+func Search[T Ordered](n *Node[T], val T) bool {
 	if n == nil {
 		return false
 	}
 	if n.Val < val {
-		return search(n.Right, val)
+		return Search(n.Right, val)
 	} else if n.Val > val {
-		return search(n.Left, val)
+		return Search(n.Left, val)
 	} else {
 		return true
 	}
@@ -34,9 +55,9 @@ func search(n *node, val int) bool {
 
 func main() {
 	vals := []int{3, 1, 4, 3, 1, 5}
-	root := node{Val: vals[0], Left: nil, Right: nil}
+	root := Node[int]{Val: vals[0], Left: nil, Right: nil}
 	for i := 1; i < len(vals); i++ {
-		insert(&root, vals[i])
+		Insert(&root, vals[i])
 	}
 	fmt.Println(root.Left.Left)
 }

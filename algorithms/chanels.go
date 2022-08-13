@@ -17,12 +17,11 @@ func greet2(c chan int) {
 }
 
 func main() {
-	c := make(chan int)
+	c := make(chan int, 100)
 	go greet(c)
 	go greet2(c)
 
 	for ch := range c {
 		fmt.Println(ch)
 	}
-
 }

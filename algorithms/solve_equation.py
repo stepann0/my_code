@@ -1,6 +1,6 @@
 import re
 
-class Solution:
+class EquationSolver:
     """Simple linear equations solver."""
 
     # Convert term to int
@@ -30,7 +30,7 @@ class Solution:
         return x, coef
 
     # Solve equation
-    def solveEquation(self, equation: str) -> str:
+    def solve_equation(self, equation: str) -> str:
         left, right = equation.split("=")
 
         left_x, left_coef = self.parse(left)
@@ -46,4 +46,4 @@ class Solution:
         return f"x={total_coef//total_x}"
 
 
-print(Solution().solveEquation("x+5-3+x=6+x-2"))
+print(EquationSolver().solve_equation("+34562x+2345-3330x=612331+x-2234")) # x=19
