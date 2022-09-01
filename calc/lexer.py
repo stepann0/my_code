@@ -56,10 +56,10 @@ class Lexer:
             
             elif self.curr_char in LETTERS:
                 name = self.read_func()
-                if name in CONSTS\
-                    and len(self.tokens_arr)>0\
-                    and isinstance(self.tokens_arr[-1], (int, float)):
-
+                if (name in CONSTS
+                    and len(self.tokens_arr)>0
+                    and isinstance(self.tokens_arr[-1], (int, float))):
+                    # If number right before constant, add *
                     self.tokens_arr.append("*")
                 self.tokens_arr.append(name)
             else:

@@ -16,7 +16,7 @@ Example:
 ```python
 expr = "((50_435 + 14_001.5)+ exp(abs(-3)- 1)) * (pi+2pi-3e)*10^-4"
 ast = Parser().parse(Lexer().lex(expr))
-res = P.eval(ast) # = 128887,778112198
+res = P.eval(ast) # = 8.183938755291484
 ```
 ```
 python calc.py "(abs(-60) + 4^2)^.5 + sqrt(16/4) + sin(2pi) - ln e"
@@ -24,4 +24,4 @@ python calc.py "(abs(-60) + 4^2)^.5 + sqrt(16/4) + sin(2pi) - ln e"
 9.717797887081348
 ```
 
-Reference to original article: https://www.engr.mun.ca/~theo/Misc/exp_parsing.htm
+Reference to the original article: https://www.engr.mun.ca/~theo/Misc/exp_parsing.htm
