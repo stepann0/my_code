@@ -2,17 +2,18 @@ EOF          = "\u0003"
 NUMBERS      = "0123456789"
 LETTERS      = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 WHITESPACE   = list(" \t")
-BI_OPERATORS = list("+-*/^") # operators that can be binary
-UN_OPERATORS = list("-+") # operators that can be unary
+OPERATORS = list("+-*/^")
+CONSTS = ["pi", "e", "tau"]
+
 
 class Lexer:
     def __init__(self, expr: str="") -> None:
         self.expr = iter(expr)
-        self.curr_char = next(self.expr, None)
+        self.curr_char = next(self.expr, EOF)
         self.tokens_arr = []
 
     def consume(self) -> None:
-        self.curr_char = next(self.expr, None)
+        self.curr_char = next(self.expr, EOF)
 
     def read_num(self) -> float:
         res = ""
@@ -31,36 +32,40 @@ class Lexer:
             self.consume()
         return fn
 
-    def read_token(self):
-        while self.curr_char:
+    def lex(self, expr=""):
+        self.__init__(expr)
+        while self.curr_char != EOF:
             # ignore whitespace chars
             if self.curr_char in WHITESPACE:
                 self.consume()
                 
             # parse numbers
             elif self.curr_char in NUMBERS+".":
-                yield self.read_num()
+                self.tokens_arr.append(self.read_num())
                 
             # process math operators
-            elif self.curr_char in BI_OPERATORS+UN_OPERATORS:
+            elif self.curr_char in OPERATORS:
                 tok = self.curr_char
                 self.consume()
-                yield tok
+                self.tokens_arr.append(tok)
             
             elif self.curr_char in "()":
                 tok = self.curr_char
                 self.consume()
-                yield tok
+                self.tokens_arr.append(tok)
             
             elif self.curr_char in LETTERS:
-                yield self.read_func()
-            else:
-                raise SyntaxError(self.expr)
+                name = self.read_func()
+                if name in CONSTS\
+                    and len(self.tokens_arr)>0\
+                    and isinstance(self.tokens_arr[-1], (int, float)):
 
-    def lex(self, expr: str):
-        self.__init__(expr)
-        tok = next(self.read_token(), None)
-        while tok != None:
-            self.tokens_arr.append(tok)
-            tok = next(self.read_token(), None)
+                    self.tokens_arr.append("*")
+                self.tokens_arr.append(name)
+            else:
+                self.error(f"Unknown symbol \"{self.curr_char}\".")
         return self.tokens_arr
+
+    def error(self, msg: str) -> None:
+        print(f"\n\033[38;05;203m{msg}\033[0m")
+        exit(1)

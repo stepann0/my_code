@@ -1,28 +1,19 @@
 import math
-import sys
 from collections import namedtuple
 from tree import Tree
 
-EOF = "\u0003"
-NUMBERS = "0123456789"
-LETTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-WHITESPACE = list(" \t")
 BI_OPERATORS = list("+-*/^") # operators that can be binary
 UN_OPERATORS = list("-+") # operators that can be unary
-FUNCTIONS = [
-    "sqrt", "factorial", "ln", "abs", "exp",
-    "sin", "cos", "tan", "ctg", "deg", "rad",
-    ] # allowed functions
 
 Operator = namedtuple("Operator", "prec, assoc, eval")
 Operators = {
-    "+": Operator(3, 'l', lambda a, b: a+b),
-    "-": Operator(3, 'l', lambda a, b: a-b),
-    "u-": Operator(4, 'r', lambda a: -a),
-    "u+": Operator(4, 'r', lambda a: a),
-    "/": Operator(5, 'l', lambda a, b: a/b),
-    "*": Operator(5, 'l', lambda a, b: a*b),
-    "^": Operator(6, 'r', lambda a, b: a**b),
+    "+" : Operator(3, 'l', lambda a, b: a+b),
+    "-" : Operator(3, 'l', lambda a, b: a-b),
+    "u-": Operator(4, '', lambda a: -a),
+    "u+": Operator(4, '', lambda a: a),
+    "/" : Operator(5, 'l', lambda a, b: a/b),
+    "*" : Operator(5, 'l', lambda a, b: a*b),
+    "^" : Operator(6, 'r', lambda a, b: a**b),
 }
 
 Function =  namedtuple("Function", "eval")
@@ -40,6 +31,12 @@ Functions = {
     "rad"      : Function(math.radians),
 }
 
+Consts = {
+    "pi" : math.pi,
+    "e"  : math.e,
+    "tau": math.tau
+}
+
 class Parser:
     """
     Parser implements a precendence climbing parsing algorithm.
@@ -54,10 +51,10 @@ class Parser:
     """
     def __init__(self, tokens_arr=[]) -> None:
         self.iter_tokens = iter(tokens_arr)
-        self.curr_tok = next(self.iter_tokens, EOF)
+        self.curr_tok = next(self.iter_tokens, None)
 
     def consume(self) -> None:
-        self.curr_tok = next(self.iter_tokens, EOF)
+        self.curr_tok = next(self.iter_tokens, None)
 
     def error(self, msg: str) -> None:
         print(f"\n\033[38;05;203m{msg}\033[0m")
@@ -86,7 +83,7 @@ class Parser:
     def parse(self, tokens_arr) -> Tree:
         self.__init__(tokens_arr)
         t = self.Exp(0)
-        self.expect(EOF)
+        self.expect(None)
         return t
 
     def Exp(self, p: int) -> Tree:
@@ -100,13 +97,21 @@ class Parser:
         return t
 
     def P(self) -> Tree|float:
-        if self.curr_tok in UN_OPERATORS:
+        if isinstance(self.curr_tok, (int, float)):
+            n = self.curr_tok
+            self.consume()
+            return n
+        elif self.curr_tok in Consts:
+            c = self.curr_tok
+            self.consume()
+            return Consts[c]
+        elif self.curr_tok in UN_OPERATORS:
             op = self.unary(self.curr_tok)
             self.consume()
             q = Operators[op].prec
             t = self.Exp(q)
             return self.make_node(op, t)
-        elif self.curr_tok in FUNCTIONS:
+        elif self.curr_tok in Functions:
             fn = self.curr_tok
             self.consume()
             # this functions are fully equal to unary operators, so their precendece is 4
@@ -117,10 +122,6 @@ class Parser:
             t = self.Exp(0)
             self.expect(")")
             return t
-        elif isinstance(self.curr_tok, (int, float)):
-            n = self.curr_tok
-            self.consume()
-            return n
         else:
             self.error("Something is wrong.")
 
