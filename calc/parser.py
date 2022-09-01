@@ -1,4 +1,5 @@
 import math
+import sys
 from collections import namedtuple
 from tree import Tree
 
@@ -15,13 +16,13 @@ FUNCTIONS = [
 
 Operator = namedtuple("Operator", "prec, assoc, eval")
 Operators = {
-    "b+": Operator(3, 'l', lambda a, b: a+b),
-    "b-": Operator(3, 'l', lambda a, b: a-b),
+    "+": Operator(3, 'l', lambda a, b: a+b),
+    "-": Operator(3, 'l', lambda a, b: a-b),
     "u-": Operator(4, 'r', lambda a: -a),
     "u+": Operator(4, 'r', lambda a: a),
-    "b/": Operator(5, 'l', lambda a, b: a/b),
-    "b*": Operator(5, 'l', lambda a, b: a*b),
-    "b^": Operator(6, 'r', lambda a, b: a**b),
+    "/": Operator(5, 'l', lambda a, b: a/b),
+    "*": Operator(5, 'l', lambda a, b: a*b),
+    "^": Operator(6, 'r', lambda a, b: a**b),
 }
 
 Function =  namedtuple("Function", "eval")
@@ -47,7 +48,7 @@ class Parser:
     They are fully equal to the unary operators.
 
     Example:
-    expr = ((50_435 + 14_001.5) + exp(abs(-3) - 1)) * (-1 + 2 + 3)^.5
+    expr = "((50_435 + 14_001.5) + exp(abs(-3) - 1)) * (-1 + 2 + 3)^.5"
     ast = Parser().parse(Lexer().lex(expr))
     res = P.eval(ast) # = 128887,778112198
     """
@@ -73,7 +74,7 @@ class Parser:
         self.error(f"Can't convert \"{token}\" to an unary operator.")
 
     def binary(self, token):
-        if token in BI_OPERATORS: return "b"+token
+        if token in BI_OPERATORS: return token
         self.error(f"Can't convert \"{token}\" to an binary operator.")
 
     def make_leaf(self, operand):
