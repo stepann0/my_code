@@ -3,17 +3,18 @@ from collections import namedtuple
 from tree import Tree
 
 BI_OPERATORS = list("+-*/^") # operators that can be binary
-UN_OPERATORS = list("-+") # operators that can be unary
+UN_OPERATORS = list("-+√") # operators that can be unary
 
 Operator = namedtuple("Operator", "prec, assoc, eval")
 Operators = {
     "+" : Operator(3, 'l', lambda a, b: a+b),
     "-" : Operator(3, 'l', lambda a, b: a-b),
-    "u-": Operator(4, '', lambda a: -a),
-    "u+": Operator(4, '', lambda a: a),
     "/" : Operator(5, 'l', lambda a, b: a/b),
     "*" : Operator(5, 'l', lambda a, b: a*b),
     "^" : Operator(6, 'r', lambda a, b: a**b),
+    "u-": Operator(6, '', lambda a: -a),
+    "u+": Operator(6, '', lambda a: a),
+    "√" : Operator(6, '', math.sqrt),
 }
 
 Function =  namedtuple("Function", "eval")
@@ -67,11 +68,15 @@ class Parser:
             self.error(f"Wrong token: \"{self.curr_tok}\".")
 
     def unary(self, token):
-        if token in UN_OPERATORS: return "u"+token
-        self.error(f"Can't convert \"{token}\" to an unary operator.")
+        if token not in UN_OPERATORS:
+            self.error(f"Can't convert \"{token}\" to an unary operator.")
+        if token in "+-":
+            return "u"+token
+        return token
 
     def binary(self, token):
-        if token in BI_OPERATORS: return token
+        if token in BI_OPERATORS:
+            return token
         self.error(f"Can't convert \"{token}\" to an binary operator.")
 
     def make_leaf(self, operand):

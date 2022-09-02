@@ -2,7 +2,7 @@ EOF          = "\u0003"
 NUMBERS      = "0123456789"
 LETTERS      = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 WHITESPACE   = list(" \t")
-OPERATORS = list("+-*/^")
+OPERATORS = list("+-*/^√")
 CONSTS = ["pi", "e", "tau"]
 
 
