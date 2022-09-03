@@ -9,12 +9,12 @@ Operator = namedtuple("Operator", "prec, assoc, eval")
 Operators = {
     "+" : Operator(3, 'l', lambda a, b: a+b),
     "-" : Operator(3, 'l', lambda a, b: a-b),
-    "/" : Operator(5, 'l', lambda a, b: a/b),
-    "*" : Operator(5, 'l', lambda a, b: a*b),
-    "^" : Operator(6, 'r', lambda a, b: a**b),
-    "u-": Operator(6, '', lambda a: -a),
-    "u+": Operator(6, '', lambda a: a),
-    "√" : Operator(6, '', math.sqrt),
+    "/" : Operator(4, 'l', lambda a, b: a/b),
+    "*" : Operator(4, 'l', lambda a, b: a*b),
+    "^" : Operator(5, 'r', lambda a, b: a**b),
+    "u-": Operator(5, '', lambda a: -a),
+    "u+": Operator(5, '', lambda a: a),
+    "√" : Operator(5, '', math.sqrt),
 }
 
 Function =  namedtuple("Function", "eval")
@@ -46,8 +46,10 @@ class Parser:
     They are fully equal to the unary operators.
 
     Example:
+    L = Lexer()
+    P = Parser()
     expr = "((50_435 + 14_001.5) + exp(abs(-3) - 1)) * (-1 + 2 + 3)^.5"
-    ast = Parser().parse(Lexer().lex(expr))
+    ast = P.parse(L.lex(expr))
     res = P.eval(ast) # = 128887,778112198
     """
     def __init__(self, tokens_arr=[]) -> None:
@@ -119,8 +121,8 @@ class Parser:
         elif self.curr_tok in Functions:
             fn = self.curr_tok
             self.consume()
-            # this functions are fully equal to unary operators, so their precendece is 4
-            t = self.Exp(4)
+            # this functions are fully equal to unary operators, so their precendece is 5
+            t = self.Exp(5)
             return self.make_node(fn, t)
         elif self.curr_tok == "(":
             self.consume()
@@ -141,7 +143,7 @@ class Parser:
         try: 
             return fn(*operands)
         except Exception:
-            self.error(f"Error on {operator} or its args: {operands}.")
+            self.error(f"Error on {operator} or its args: {list(operands)}.")
 
 
     def eval(self, tree) -> float:

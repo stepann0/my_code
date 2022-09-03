@@ -17,7 +17,7 @@ class Lexer:
 
     def read_num(self) -> float:
         res = ""
-        while self.curr_char and self.curr_char in NUMBERS+"._":
+        while self.curr_char != EOF and self.curr_char in NUMBERS+"._":
             res += self.curr_char
             self.consume()
         try:
@@ -27,7 +27,7 @@ class Lexer:
 
     def read_func(self) -> str:
         fn = ""
-        while self.curr_char and self.curr_char in LETTERS+NUMBERS+"_":
+        while self.curr_char != EOF and self.curr_char in LETTERS+NUMBERS+"_":
             fn += self.curr_char
             self.consume()
         return fn

@@ -1,5 +1,5 @@
 Calculator based on precendence climbing parsing algorithm.
-Supported operators: `+, -, *, /, ^, unary + and -`<br>
+Supported operators: `+, -, *, /, ^, √, unary + and -`<br>
 Supported functions: `sqrt, factorial, ln, abs, exp, sin, cos, tan, ctg, deg, rad`.<br>
 Supported constants: `pi, e, tau`.<br>
 
@@ -14,9 +14,11 @@ F --> "sqrt" | "sin" | "ln" | "abs"... etc.
 ```
 Example:
 ```python
+L = Lexer()
+P = Parser()
 expr = "((50_435 + 14_001.5)+ exp(abs(-3)- 1)) * (pi+2pi-3e)*10^-4"
-ast = Parser().parse(Lexer().lex(expr))
-res = Parser().eval(ast) # = 8.183938755291484
+ast = P.parse(L.lex(expr))
+res = P.eval(ast) # = 8.183938755291484
 ```
 ```
 python calc.py "(abs(-60) + 4^2)^.5 + sqrt(16/4) + sin(2pi) - ln e"
