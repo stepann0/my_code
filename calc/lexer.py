@@ -56,11 +56,11 @@ class Lexer:
             
             elif self.curr_char in LETTERS:
                 name = self.read_func()
-                if (name in CONSTS
-                    and len(self.tokens_arr)>0
-                    and isinstance(self.tokens_arr[-1], (int, float))):
-                    # If number right before constant, add *
-                    self.tokens_arr.append("*")
+                if name in CONSTS and len(self.tokens_arr)>0:
+                    last = self.tokens_arr[-1]
+                    if (last == ')' or isinstance(last, (int, float))):
+                        # if a constant is preceded by a number or a ')', add '*'
+                        self.tokens_arr.append("*")
                 self.tokens_arr.append(name)
             else:
                 self.error(f"Unknown symbol \"{self.curr_char}\".")
