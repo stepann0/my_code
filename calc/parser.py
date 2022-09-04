@@ -67,7 +67,8 @@ class Parser:
         if self.curr_tok == tok_type:
             self.consume()
         else:
-            self.error(f"Wrong token: \"{self.curr_tok}\".")
+            tok = self.curr_tok if self.curr_tok != None else "EOF"
+            self.error(f"Wrong token: \"{tok}\".")
 
     def unary(self, token):
         if token not in UN_OPERATORS:
@@ -130,7 +131,7 @@ class Parser:
             self.expect(")")
             return t
         else:
-            self.error("Something is wrong.")
+            self.error("Incorrect input.")
 
     def calc(self, operator, *operands) -> float:
         fn = None
@@ -143,7 +144,7 @@ class Parser:
         try: 
             return fn(*operands)
         except Exception:
-            self.error(f"Error on {operator} or its args: {list(operands)}.")
+            self.error(f"Error on {operator} or its args: ({', '.join(map(str, operands))}).")
 
 
     def eval(self, tree) -> float:
