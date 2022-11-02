@@ -1,2 +1,2 @@
 ### CLI реализация игры 2048.
-![screenshot](https://user-images.githubusercontent.com/45241991/183789463-24fb3e78-f41e-4934-a714-e3704336479e.png)
+![play-2048](https://user-images.githubusercontent.com/45241991/199503761-503e929c-961e-4d43-b052-e98374b7cda8.gif)
