@@ -310,20 +310,20 @@ func (g *Game2048) Run() {
 	// do not display entered characters on the screen
 	exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
 
-	key := ListenKey()
+	key := listenKey()
 	g.Show(g.Field)
 	for {
 		g.Move(<-key)
 	}
 }
 
-func ListenKey() <-chan uint8 {
+func listenKey() <-chan uint8 {
 	c := make(chan uint8)
 	var b []byte = make([]byte, 3)
 	go func() {
 		for {
 			os.Stdin.Read(b)
-			// If arrow key pressed
+			// если нажата стрелка
 			if b[0] == uint8(27) && b[1] == uint8(91) {
 				c <- b[2]
 			}
@@ -332,7 +332,7 @@ func ListenKey() <-chan uint8 {
 	return c
 }
 
-var ColorScheme map[int]string = map[int]string{
+var ColorScheme = map[int]string{
 	0:    " · ",                          // 0
 	2:    "\033[01;38;05;16;48;05;158m",  // 2
 	4:    "\033[01;38;05;15;48;05;42m",   // 4
