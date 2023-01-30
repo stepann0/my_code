@@ -80,7 +80,7 @@ func TestCompact(t *testing.T) {
 		},
 	}
 	for _, tC := range testCases {
-		score := tC.have.Compact()
+		score := tC.have.compact()
 		if !tC.want.equal(tC.have) || score != tC.score {
 			t.Errorf("compact error: have %v, want %v, score: %d", tC.have, tC.want, score)
 		}

@@ -91,7 +91,7 @@ type Field struct {
 
 func NewField(rows, cols int) Field {
 	if cols < 2 || rows < 2 {
-		panic("Two rows and coloms minimum.\n")
+		panic("two rows and coloms minimum.\n")
 	}
 
 	grid := make([]Row, rows)
@@ -129,15 +129,10 @@ func (f *Field) addRandom() {
 	}
 }
 
-func (f1 *Field) Equal(f2 *Field) bool {
-	if f1.cols != f2.cols || f1.rows != f2.rows {
-		return false
-	}
+func (f1 *Field) equal(f2 *Field) bool {
 	for i := range f1.Grid {
-		for j := range f1.Grid[i] {
-			if f1.Grid[i][j] != f2.Grid[i][j] {
-				return false
-			}
+		if !f1.Grid[i].equal(f2.Grid[i]) {
+			return false
 		}
 	}
 	return true
@@ -174,7 +169,7 @@ func (f *Field) Left() int {
 //        RIGHT
 // ------------------
 
-func (f *Field) LazyCompactRight(i int) int {
+func (f *Field) compactRight(i int) int {
 	f.Grid[i].reverse()
 	score := f.Grid[i].compact()
 	f.Grid[i].reverse()
@@ -184,7 +179,7 @@ func (f *Field) LazyCompactRight(i int) int {
 func (f *Field) Right() int {
 	score := 0
 	for i := 0; i < f.rows; i++ {
-		score += f.LazyCompactRight(i)
+		score += f.compactRight(i)
 	}
 	return score
 }
@@ -193,7 +188,7 @@ func (f *Field) Right() int {
 //         UP
 // ------------------
 
-func (f *Field) LazyCompactUp(col_num int) int {
+func (f *Field) compactUp(col_num int) int {
 	// Copy of colomn
 	col_cp := make(Row, f.rows)
 	for i := range col_cp {
@@ -210,7 +205,7 @@ func (f *Field) LazyCompactUp(col_num int) int {
 func (f *Field) Up() int {
 	score := 0
 	for i := 0; i < f.cols; i++ {
-		score += f.LazyCompactUp(i)
+		score += f.compactUp(i)
 	}
 	return score
 }
@@ -219,7 +214,7 @@ func (f *Field) Up() int {
 //        DOWN
 // ------------------
 
-func (f *Field) LazyCompactDown(col_num int) int {
+func (f *Field) compactDown(col_num int) int {
 	// reversed copy of colomn
 	col_cp := Row{}
 	for i := f.rows - 1; i >= 0; i-- {
@@ -237,7 +232,7 @@ func (f *Field) LazyCompactDown(col_num int) int {
 func (f *Field) Down() int {
 	score := 0
 	for i := 0; i < f.cols; i++ {
-		score += f.LazyCompactDown(i)
+		score += f.compactDown(i)
 	}
 	return score
 }
@@ -265,13 +260,14 @@ type Game2048 struct {
 	ColorScheme map[int]string
 }
 
+const (
+	UP    uint8 = 65
+	DOWN  uint8 = 66
+	RIGHT uint8 = 67
+	LEFT  uint8 = 68
+)
+
 func (g *Game2048) Move(key uint8) {
-	const (
-		UP    uint8 = 65
-		DOWN  uint8 = 66
-		RIGHT uint8 = 67
-		LEFT  uint8 = 68
-	)
 	old_field := g.Field.Copy()
 	switch key {
 	case UP:
@@ -288,7 +284,7 @@ func (g *Game2048) Move(key uint8) {
 	}
 
 	g.Show(g.Field)
-	if old_field.Equal(g.Field) {
+	if old_field.equal(g.Field) {
 		return
 	}
 
@@ -328,7 +324,7 @@ func ListenKey() <-chan uint8 {
 		for {
 			os.Stdin.Read(b)
 			// If arrow key pressed
-			if len(b) >= 3 && b[0] == uint8(27) && b[1] == uint8(91) {
+			if b[0] == uint8(27) && b[1] == uint8(91) {
 				c <- b[2]
 			}
 		}
