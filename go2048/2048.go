@@ -6,28 +6,31 @@ import (
 	"os"
 	"os/exec"
 	"sort"
+	"strings"
 	"time"
 )
 
 type Row []int
 
-func (row Row) Compact() int {
-	length := len(row)
+// сдвигает строку в лево по правилам 2048 и возврацает заработанные очки
+// {4, 4, 2, 2, 8, 8, 0, 0} -> {8, 4, 16, 0, 0, 0, 0, 0} = 28
+func (row *Row) compact() int {
+	length := len(*row)
 	if length <= 1 {
 		return 0
 	}
 
 	row.clearZeroes()
 	score := 0
-	res := make([]int, length)
+	res := make(Row, length)
 	for i, j := 0, 0; i < length; {
-		if row[i] == 0 {
+		if (*row)[i] == 0 {
 			i++
 			continue
 		}
 
-		if i < length-1 && row[i] == row[i+1] {
-			sum := row[i] * 2
+		if i < length-1 && (*row)[i] == (*row)[i+1] {
+			sum := (*row)[i] * 2
 			res[j] = sum
 			score += sum
 			j++
@@ -35,20 +38,22 @@ func (row Row) Compact() int {
 			continue
 		}
 		// If not condition than just add element
-		res[j] = row[i]
+		res[j] = (*row)[i]
 		j++
 		i++
 	}
-	row = res
+	(*row) = res
 	return score
 }
 
+// передвигает все 0 в конец: {2, 0, 0, 4, 0, 4} -> {2, 4, 4, 0, 0, 0}
 func (row Row) clearZeroes() {
 	sort.SliceStable(row, func(i, j int) bool {
 		return row[j] == 0
 	})
 }
 
+// переворачивает строку
 func (row Row) reverse() {
 	for i, j := 0, len(row)-1; i < j; i, j = i+1, j-1 {
 		row[i], row[j] = row[j], row[i]
@@ -67,16 +72,16 @@ func (row1 Row) equal(row2 Row) bool {
 	return true
 }
 
-func (row Row) Colorize(colors map[int]string) string {
-	s := ""
+func (row Row) colorize(colors map[int]string) string {
+	var s strings.Builder
 	for _, cell := range row {
 		if cell == 0 {
-			s += colors[0]
+			fmt.Fprint(&s, colors[0])
 			continue
 		}
-		s += fmt.Sprintf("%s%3d%s", colors[cell], cell, "\033[0m")
+		fmt.Fprintf(&s, "%s%3d%s", colors[cell], cell, "\033[0m")
 	}
-	return s
+	return s.String()
 }
 
 type Field struct {
@@ -97,14 +102,14 @@ func NewField(rows, cols int) Field {
 	F := Field{
 		grid, cols, rows,
 	}
-	F.AddRandom()
-	F.AddRandom()
-	F.AddRandom()
+	F.addRandom()
+	F.addRandom()
+	F.addRandom()
 
 	return F
 }
 
-func (f *Field) AddRandom() {
+func (f *Field) addRandom() {
 	empty_cells := [][2]int{} // like slice of tuples
 	for i := range f.Grid {
 		for j := range f.Grid[i] {
@@ -160,7 +165,7 @@ func (f *Field) Copy() Field {
 func (f *Field) Left() int {
 	score := 0
 	for i := 0; i < f.rows; i++ {
-		score += f.Grid[i].Compact()
+		score += f.Grid[i].compact()
 	}
 	return score
 }
@@ -171,7 +176,7 @@ func (f *Field) Left() int {
 
 func (f *Field) LazyCompactRight(i int) int {
 	f.Grid[i].reverse()
-	score := f.Grid[i].Compact()
+	score := f.Grid[i].compact()
 	f.Grid[i].reverse()
 	return score
 }
@@ -195,7 +200,7 @@ func (f *Field) LazyCompactUp(col_num int) int {
 		col_cp[i] = f.Grid[i][col_num]
 	}
 
-	score := col_cp.Compact()
+	score := col_cp.compact()
 	for i := 0; i < f.rows; i++ {
 		f.Grid[i][col_num] = col_cp[i]
 	}
@@ -221,7 +226,7 @@ func (f *Field) LazyCompactDown(col_num int) int {
 		col_cp = append(col_cp, f.Grid[i][col_num])
 	}
 
-	score := col_cp.Compact()
+	score := col_cp.compact()
 	col_cp.reverse()
 	for i := 0; i < f.rows; i++ {
 		f.Grid[i][col_num] = col_cp[i]
@@ -257,7 +262,7 @@ func (f Field) String() string {
 type Game2048 struct {
 	Field       *Field
 	Score       int
-	ColorScheme *map[int]string
+	ColorScheme map[int]string
 }
 
 func (g *Game2048) Move(key uint8) {
@@ -289,7 +294,7 @@ func (g *Game2048) Move(key uint8) {
 
 	// Add delay before adding random cell
 	time.Sleep(time.Millisecond * 180)
-	g.Field.AddRandom()
+	g.Field.addRandom()
 	g.Show(g.Field)
 }
 
@@ -297,10 +302,10 @@ func (g *Game2048) Show(f *Field) {
 	// Print game field
 	fmt.Println("\033c\033[H") // clear terminal
 	for i := range f.Grid {
-		fmt.Printf(" %s\n", f.Grid[i].Colorize(g.ColorScheme))
+		fmt.Printf(" %s\n", f.Grid[i].colorize(g.ColorScheme))
 	}
 	// Print score. g.ColorScheme[-1] is a color for score
-	fmt.Printf("\n%s %s%d %s\n\n", (*g.ColorScheme)[-1], "Score: ", g.Score, "\033[0m")
+	fmt.Printf("\n%s %s%d %s\n\n", g.ColorScheme[-1], "Score: ", g.Score, "\033[0m")
 }
 
 func (g *Game2048) Run() {
@@ -352,7 +357,7 @@ func main() {
 	F := NewField(4, 4)
 	game := Game2048{
 		Field:       &F,
-		ColorScheme: &ColorScheme,
+		ColorScheme: ColorScheme,
 	}
 	game.Run()
 }
