@@ -5,28 +5,29 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"sort"
 	"time"
 )
 
 type Row []int
 
-func (row *Row) Compact() int {
-	length := len(*row)
+func (row Row) Compact() int {
+	length := len(row)
 	if length <= 1 {
 		return 0
 	}
 
-	row.ClearZeroes()
+	row.clearZeroes()
 	score := 0
 	res := make([]int, length)
 	for i, j := 0, 0; i < length; {
-		if (*row)[i] == 0 {
+		if row[i] == 0 {
 			i++
 			continue
 		}
 
-		if i < length-1 && (*row)[i] == (*row)[i+1] {
-			sum := (*row)[i] * 2
+		if i < length-1 && row[i] == row[i+1] {
+			sum := row[i] * 2
 			res[j] = sum
 			score += sum
 			j++
@@ -34,39 +35,46 @@ func (row *Row) Compact() int {
 			continue
 		}
 		// If not condition than just add element
-		res[j] = (*row)[i]
+		res[j] = row[i]
 		j++
 		i++
 	}
-	*row = res
+	row = res
 	return score
 }
 
-func (row *Row) ClearZeroes() {
-	res := make([]int, len(*row))
-	for i, j := 0, 0; i < len(*row); i++ {
-		if (*row)[i] != 0 {
-			res[j] = (*row)[i]
-			j++
+func (row Row) clearZeroes() {
+	sort.SliceStable(row, func(i, j int) bool {
+		return row[j] == 0
+	})
+}
+
+func (row Row) reverse() {
+	for i, j := 0, len(row)-1; i < j; i, j = i+1, j-1 {
+		row[i], row[j] = row[j], row[i]
+	}
+}
+
+func (row1 Row) equal(row2 Row) bool {
+	if len(row1) != len(row2) {
+		return false
+	}
+	for i := range row1 {
+		if row1[i] != row2[i] {
+			return false
 		}
 	}
-	*row = res
+	return true
 }
 
-func (row *Row) Reverse() {
-	for i, j := 0, len(*row)-1; i < j; i, j = i+1, j-1 {
-		(*row)[i], (*row)[j] = (*row)[j], (*row)[i]
-	}
-}
-
-func (row *Row) Colorize(colors *map[int]string) string {
+func (row Row) Colorize(colors map[int]string) string {
 	s := ""
-	for _, cell := range *row {
+	for _, cell := range row {
 		if cell == 0 {
-			s += (*colors)[0]
+			s += colors[0]
 			continue
 		}
-		s += fmt.Sprintf("%s%3d%s", (*colors)[cell], cell, "\033[0m")
+		s += fmt.Sprintf("%s%3d%s", colors[cell], cell, "\033[0m")
 	}
 	return s
 }
@@ -162,9 +170,9 @@ func (f *Field) Left() int {
 // ------------------
 
 func (f *Field) LazyCompactRight(i int) int {
-	f.Grid[i].Reverse()
+	f.Grid[i].reverse()
 	score := f.Grid[i].Compact()
-	f.Grid[i].Reverse()
+	f.Grid[i].reverse()
 	return score
 }
 
@@ -207,14 +215,14 @@ func (f *Field) Up() int {
 // ------------------
 
 func (f *Field) LazyCompactDown(col_num int) int {
-	// Reversed copy of colomn
+	// reversed copy of colomn
 	col_cp := Row{}
 	for i := f.rows - 1; i >= 0; i-- {
 		col_cp = append(col_cp, f.Grid[i][col_num])
 	}
 
 	score := col_cp.Compact()
-	col_cp.Reverse()
+	col_cp.reverse()
 	for i := 0; i < f.rows; i++ {
 		f.Grid[i][col_num] = col_cp[i]
 	}
