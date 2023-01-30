@@ -1,9 +1,6 @@
 package main
 
-import (
-	"fmt"
-	"time"
-)
+import "fmt"
 
 // Рекурсия без оптимизаций
 func fib(n int) int {
@@ -41,7 +38,7 @@ func main() {
 	for i := 0; i < N; i++ {
 		fmt.Println(fibCache(i, cache))
 	}
-	
+
     // or
 	// nextFib := fibGenerator()
 	// for i := 0; i < N; i++ {
