@@ -13,7 +13,7 @@ func fib(n int) int {
 // Рекурсия с мемоизацией
 func fibCache(n int, cache map[int]int) int {
 	if n <= 1 {
-		cache[n] = n
+		return n
 	}
 	if a, ok := cache[n]; ok {
 		return a
