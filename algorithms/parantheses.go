@@ -4,38 +4,28 @@ import (
 	"fmt"
 )
 
-var pairs map[string]string = map[string]string{
-	")": "(",
-	"}": "{",
-	"]": "[",
-}
-
-func isClosePar(p string) bool {
-	if p == ")" || p == "]" || p == "}" {
-		return true
-	}
-	return false
-}
-
 func isValid(s string) bool {
-	stack := []string{}
+	stack := []rune{}
+	pairs := map[rune]rune{
+		')': '(',
+		'}': '{',
+		']': '[',
+	}
 
-	for _, v := range s {
-		par := string(v)
-
-		if isClosePar(par) {
+	for _, parenth := range s {
+		if pair, ok := pairs[parenth]; ok { // closing parenthesis
 			l := len(stack)
-			if l != 0 && stack[l-1] == pairs[par] {
+			if l != 0 && stack[l-1] == pair {
 				stack = stack[:l-1]
 			} else {
 				return false
 			}
-		} else {
-			stack = append(stack, par)
+		} else { // opening parenthesis
+			stack = append(stack, parenth)
 		}
 	}
 
-	// unclosed parenthes remain
+	// left unclosed parentheses
 	if len(stack) != 0 {
 		return false
 	}
@@ -43,5 +33,5 @@ func isValid(s string) bool {
 }
 
 func main() {
-	fmt.Println(isValid("(]"))
+	fmt.Println(isValid("(({[({{([])}})]}))"))
 }
