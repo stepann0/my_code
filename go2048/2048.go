@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"os/exec"
 	"sort"
 	"strings"
 	"time"
+
+	"golang.org/x/term"
 )
 
 type Row []int
@@ -260,26 +261,16 @@ type Game2048 struct {
 	ColorScheme map[int]string
 }
 
-const (
-	UP    uint8 = 65
-	DOWN  uint8 = 66
-	RIGHT uint8 = 67
-	LEFT  uint8 = 68
-)
-
 func (g *Game2048) Move(key uint8) {
 	old_field := g.Field.Copy()
 	switch key {
-	case UP:
+	case keyUp:
 		g.Score += g.Field.Up()
-
-	case DOWN:
+	case keyDown:
 		g.Score += g.Field.Down()
-
-	case RIGHT:
+	case keyRight:
 		g.Score += g.Field.Right()
-
-	case LEFT:
+	case keyLeft:
 		g.Score += g.Field.Left()
 	}
 
@@ -298,54 +289,100 @@ func (g *Game2048) Show(f *Field) {
 	// Print game field
 	fmt.Println("\033c\033[H") // clear terminal
 	for i := range f.Grid {
-		fmt.Printf(" %s\n", f.Grid[i].colorize(g.ColorScheme))
+		fmt.Printf(" %s\n\r", f.Grid[i].colorize(g.ColorScheme))
 	}
 	// Print score. g.ColorScheme[-1] is a color for score
-	fmt.Printf("\n%s %s%d %s\n\n", g.ColorScheme[-1], "Score: ", g.Score, "\033[0m")
+	fmt.Printf("\n%s %s%d %s\n\r", g.ColorScheme[-1], "Score: ", g.Score, "\033[0m")
 }
 
 func (g *Game2048) Run() {
-	// disable input buffering
-	exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
-	// do not display entered characters on the screen
-	exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		panic(err)
+	}
+	defer term.Restore(int(os.Stdin.Fd()), oldState)
 
-	key := listenKey()
+	keys := listenKey()
 	g.Show(g.Field)
 	for {
-		g.Move(<-key)
+		key := <-keys
+		switch key {
+		case keyCtrlC, keyCtrlD:
+			os.Exit(0)
+		case keyUp, keyDown, keyLeft, keyRight:
+			g.Move(key)
+		}
 	}
+}
+
+const (
+	keyUnknown uint8 = 0
+	keyCtrlC         = 3
+	keyCtrlD         = 4
+	keyEnter         = '\r'
+	keyEscape        = '\033'
+	keyUp            = iota
+	keyDown
+	keyLeft
+	keyRight
+)
+
+func bytesToKey(buf []byte) uint8 {
+	switch len(buf) {
+	case 1:
+		if buf[0] == 3 || buf[0] == 4 || buf[0] == '\r' || buf[0] == '\033' {
+			return uint8(buf[0]) // ^C, ^D, enter, ESC
+		}
+	case 3:
+		if buf[0] == 27 && buf[1] == 91 {
+			switch buf[2] {
+			case 'A':
+				return keyUp
+			case 'B':
+				return keyDown
+			case 'C':
+				return keyRight
+			case 'D':
+				return keyLeft
+			}
+		}
+	}
+	return keyUnknown
 }
 
 func listenKey() <-chan uint8 {
 	c := make(chan uint8)
-	var b []byte = make([]byte, 3)
 	go func() {
+		buf := make([]byte, 16)
 		for {
-			os.Stdin.Read(b)
-			// если нажата стрелка
-			if b[0] == uint8(27) && b[1] == uint8(91) {
-				c <- b[2]
+			n, err := os.Stdin.Read(buf)
+			if err != nil {
+				panic(err)
 			}
+			c <- bytesToKey(buf[:n])
 		}
 	}()
 	return c
 }
 
 var ColorScheme = map[int]string{
-	0:    " · ",                          // 0
-	2:    "\033[01;38;05;16;48;05;158m",  // 2
-	4:    "\033[01;38;05;15;48;05;42m",   // 4
-	8:    "\033[01;38;05;15;48;05;33m",   // 8
-	16:   "\033[01;38;05;15;48;05;98m",   // 16
-	32:   "\033[01;38;05;91;48;05;182m",  // 32
-	64:   "\033[01;38;05;15;48;05;102m",  // 64
-	128:  "\033[01;38;05;52;48;05;203m",  // 128
-	256:  "\033[01;38;05;15;48;05;24m",   // 256
-	512:  "\033[01;38;05;233;48;05;208m", // 512
-	1024: "\033[01;38;05;232;48;05;220m", // 1024
-	2048: "\033[01;38;05;232;48;05;83m",  // 2048
-	-1:   "\033[01;38;05;232;48;05;194m", // for score
+	0:    " · ",
+	2:    rgbBg(16, 48, 5, 158),
+	4:    rgbBg(15, 48, 5, 42),
+	8:    rgbBg(15, 48, 5, 33),
+	16:   rgbBg(15, 48, 5, 98),
+	32:   rgbBg(91, 48, 5, 182),
+	64:   rgbBg(15, 48, 5, 102),
+	128:  rgbBg(52, 48, 5, 203),
+	256:  rgbBg(15, 48, 5, 24),
+	512:  rgbBg(233, 48, 5, 208),
+	1024: rgbBg(232, 48, 5, 220),
+	2048: rgbBg(232, 48, 5, 83),
+	-1:   rgbBg(232, 48, 5, 194), // for score
+}
+
+func rgbBg(c, r, g, b int) string {
+	return fmt.Sprintf("%c[01;38;05;%d;%d;%d;%dm", keyEscape, c, r, g, b)
 }
 
 func main() {
